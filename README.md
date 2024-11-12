@@ -60,6 +60,7 @@ After you run the container, you will find two CSV files in the directory you sp
 | `daysSinceLastPull` | The number of days since the repository was last pulled |
 | `lifecyclePolicyText` | The lifecycle policy text of the repository |
 | `pricingDescription` | The pricing description of the repository |
+
 The contents of this report facilitate to identify the repositories that are not being used and can be deleted to reduce costs. It also allows to identify which repositories have the most images, the most heaviest images ones, and the ones without lifecycle policies; which influences the cost of the repository.
 
 - `images_summary.csv`: contains a summary of the images and their storage utilization. This report contains the following attributes:

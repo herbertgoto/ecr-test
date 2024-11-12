@@ -90,6 +90,10 @@ The contents of this report allows to do a deep dive into the images and their s
 - For Docker build issues, verify that your Docker daemon is running
 - Check that all required files are in the correct locations as per the project structure
 
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.

@@ -1,0 +1,24 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PricingAPI",
+            "Effect": "Allow",
+            "Action": [
+                "pricing:GetProducts"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ECRAPI",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetLifecyclePolicy",
+                "ecr:DescribeRegistry"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

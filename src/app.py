@@ -1,7 +1,7 @@
 #!/bin/env python
 
 """
-ECR Cost and Security Report Tool
+ECR Cost and Security Report Tool # pylint: disable=line-too-long
 
 This script generates reports on Amazon Elastic Container Registry (ECR) repositories and images.
 It can create a summary report for all repositories in a registry or a detailed report for images in a specific repository.
@@ -25,11 +25,11 @@ import csv
 import logging
 import json
 from datetime import datetime
-from pythonjsonlogger import jsonlogger
-import boto3
-import pytz
+from pythonjsonlogger import jsonlogger # pylint: disable=import-error
+import boto3 # pylint: disable=import-error
+import pytz # pylint: disable=import-error
 
-# Set env to scan a registry or a repository. Provide the name of the repository as env (e.g. REPORT=nginx).
+# Set env to scan a registry or a repository. Provide the name of the repository as env (e.g. REPORT=nginx). # pylint: disable=line-too-long
 report = os.environ.get('REPORT', 'registry')
 log_service_name = os.environ.get('LOG_SERVICE_NAME', 'ECRTool')
 log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
@@ -65,6 +65,7 @@ def get_ecr_repo_cost_report() -> None:
         csv.Error: If there's an error writing to the CSV file.
     """
     # Define the columns for the CSV report
+    # pylint: disable=invalid-name
     REPO_REPORT_COLUMNS = [
         "repositoryName","createdAt","scanOnPush","totalImages","totalSize(MB)","monthlyStorageCost(USD)",
         "hasBeenPulled","lastRecordedPullTime","daysSinceLastPull","lifecyclePolicyText"
@@ -256,6 +257,7 @@ def get_image_report(
         csv.Error: If an error occurs while writing to the CSV file.
     """
     # Define the columns for the CSV report
+    # pylint: disable=invalid-name
     IMAGE_REPORT_COLUMNS = [
         "repositoryName","imageTags","imagePushedAt","imageSize(MB)","imageScanStatus","imageScanCompletedAt",
         "findingSeverityCounts","lastRecordedPullTime","imageDigest","imageManifestMediaType"

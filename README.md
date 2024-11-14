@@ -26,19 +26,53 @@ Follow these steps to run the project:
    # or create the directories manually
    ```
 
-2. **Prepare your source code**
-   - Place your Python application code in the `src/` directory
-   - Ensure `app.py` is your main application file
-   - Create a `requirements.txt` file in the `src/` directory listing all Python dependencies
-
-3. **Build the Docker image**
+2. **Build the Docker image**
    ```bash
-   docker build -t my-python-app .
+   docker build -t my-app .
+   ```
+   
+   This command builds a Docker image with the following parameters:
+   - `-t my-app`: Tags the image with the name "my-python-app"
+   - `.`: Uses the Dockerfile in the current directory as the build context
+
+   Make sure you're in the root directory of the project when running this command.
+
+3. **Run the container**
+
+   Use the following command to run the container, replacing the placeholders with your specific values:
+
+   ```bash
+   docker run \
+     -e AWS_ACCESS_KEY_ID=$(aws --profile <aws profile name> configure get aws_access_key_id) \
+     -e AWS_SECRET_ACCESS_KEY=$(aws --profile <aws profile name> configure get aws_secret_access_key) \
+     -e AWS_DEFAULT_REGION=<aws region code> \
+     [-e AWS_SESSION_TOKEN=$(aws --profile <aws profile name> configure get aws_session_token)] \
+     [-e LOG_VERBOSITY=<log verbosity>] \
+     [-e DECIMAL_SEPARATOR=<decimal separator>] \
+     -v <path to the directory where the report will be saved>:/data \
+     <container-name>:<tag>
    ```
 
-4. **Run the container**
+   Replace the following placeholders:
+   - `<aws profile name>`: Your AWS CLI profile name (e.g., `default`)
+   - `<aws region code>`: Your AWS region (e.g., `us-east-1`)
+   - `<path to the directory where the report will be saved>`: Local directory path where the CSV reports will be saved
+   - `<container-name>`: Name of the container image you built (e.g., `my-python-app`)
+   - `<tag>`: Tag of the container image (e.g., `latest`)
+
+   Optional parameters:
+   - `AWS_SESSION_TOKEN`: Required only if you're using temporary credentials
+   - `LOG_VERBOSITY`: Set to `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`)
+   - `DECIMAL_SEPARATOR`: Set to `.` or `,` for CSV number formatting (default: `.`)
+
+   Example command:
    ```bash
-   docker run -e AWS_ACCESS_KEY_ID=$(aws --profile <aws profile name> configure get aws_access_key_id) -e AWS_SECRET_ACCESS_KEY=$(aws --profile <aws profile name> configure get aws_secret_access_key) -e AWS_DEFAULT_REGION=<aws region code> [-e AWS_SESSION_TOKEN=$(aws --profile <aws profile name> configure get aws_session_token)] [-e LOG_VERBOSITY=<log verbosity>] -v <path to the directory where the report will be saved>:/data <container-name>:<tag>
+   docker run \
+     -e AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id) \
+     -e AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key) \
+     -e AWS_DEFAULT_REGION=us-east-1 \
+     -v ~/ecr-reports:/data \
+     my-python-app:latest
    ```
 
 ## Understanding the reports
@@ -59,7 +93,6 @@ After you run the container, you will find two CSV files in the directory you sp
 | `lastRecordedPullTime` | The date when the repository was last pulled |
 | `daysSinceLastPull` | The number of days since the repository was last pulled |
 | `lifecyclePolicyText` | The lifecycle policy text of the repository |
-| `pricingDescription` | The pricing description of the repository |
 
 The contents of this report facilitate to identify the repositories that are not being used and can be deleted to reduce costs. It also allows to identify which repositories have the most images, the most heaviest images ones, and the ones without lifecycle policies; which influences the cost of the repository.
 

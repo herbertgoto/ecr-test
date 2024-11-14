@@ -33,6 +33,7 @@ import pytz
 report = os.environ.get('REPORT', 'registry')
 log_service_name = os.environ.get('LOG_SERVICE_NAME', 'ECRTool')
 log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
+decimal_separator = os.environ.get('DECIMAL_SEPARATOR', '.')
 
 # Logging setup
 logger = logging.getLogger(log_service_name)
@@ -66,7 +67,7 @@ def get_ecr_repo_cost_report() -> None:
     # Define the columns for the CSV report
     REPO_REPORT_COLUMNS = [
         "repositoryName","createdAt","scanOnPush","totalImages","totalSize(MB)","monthlyStorageCost(USD)",
-        "hasBeenPulled","lastRecordedPullTime","daysSinceLastPull","lifecyclePolicyText","pricingDescription"
+        "hasBeenPulled","lastRecordedPullTime","daysSinceLastPull","lifecyclePolicyText"
     ]
 
     try:
@@ -99,6 +100,8 @@ def get_ecr_repo_cost_report() -> None:
             writer = csv.DictWriter(file, fieldnames=REPO_REPORT_COLUMNS, delimiter='|')
             writer.writeheader()
             for data in repos:
+                data['totalSize(MB)'] = str(data['totalSize(MB)']).replace('.', decimal_separator)
+                data['monthlyStorageCost(USD)'] = str(data['monthlyStorageCost(USD)']).replace('.', decimal_separator)
                 writer.writerow(data)
 
         logger.info("All repositories have been processed for registry with id: %s", client_ecr.describe_registry()['registryId'])
@@ -169,11 +172,10 @@ def get_image_summary(
 
         # Compile summary data
         summary = {'totalImages': total_images,
-                   'totalSize(MB)': round(total_size / (1024**2),1),
-                   'monthlyStorageCost(USD)': round(total_size * ecr_costs['price_per_unit'] / (1024**3),4),
+                   'totalSize(MB)': round(total_size / (1000**2),1),
+                   'monthlyStorageCost(USD)': round(total_size * ecr_costs['price_per_unit'] / (1000**3),4),
                    'lastRecordedPullTime': dt,
-                   'daysSinceLastPull': day_diff,
-                   'pricingDescription': ecr_costs['description']
+                   'daysSinceLastPull': day_diff
                 }
         
         logger.info("All images have been processed for repository: %s", repo)
@@ -290,7 +292,7 @@ def get_image_report(
                     'repositoryName': i['repositoryName'],
                     'imageTags': tags,
                     'imagePushedAt': i['imagePushedAt'].strftime("%m/%d/%Y %H:%M"),
-                    'imageSize(MB)': round(i['imageSizeInBytes'] / (1024**2),1),
+                    'imageSize(MB)': round(i['imageSizeInBytes'] / (1000**2),1),
                     'imageScanStatus': scan_status,
                     'imageScanCompletedAt': scan_completed_at,
                     'findingSeverityCounts': finding_severity_counts,
@@ -306,12 +308,16 @@ def get_image_report(
             response = client_ecr.describe_images(repositoryName=repo,nextToken=response['nextToken'], maxResults=MAX_RESULTS)
             continue
 
+        if repo.find('/') != -1:
+            repo = repo.replace('/', '_')
+            
         # Write image data to CSV file
         with open('/data/'+repo+'_'+IMAGE_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
         #with open(IMAGE_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
             writer = csv.DictWriter(file, fieldnames=IMAGE_REPORT_COLUMNS, delimiter='|')
             writer.writeheader()
             for data in images:
+                data['imageSize(MB)'] = str(data['imageSize(MB)']).replace('.', decimal_separator)
                 writer.writerow(data)
 
         logger.info("All images have been processed for repository: %s", repo)

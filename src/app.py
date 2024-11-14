@@ -87,7 +87,7 @@ def get_ecr_repo_cost_report() -> None:
                 repo.update(get_image_summary(i['repositoryName']))
                 repo.update(get_lifecycle_policy(i['repositoryName']))
                 repos.append(repo)
-            
+
             # Check for more pages of results
             if 'nextToken' not in response:
                 break
@@ -96,7 +96,7 @@ def get_ecr_repo_cost_report() -> None:
 
         # Write repository data to CSV file
         with open('/data/'+REPO_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
-        #with open(REPO_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.    
+        #with open(REPO_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
             writer = csv.DictWriter(file, fieldnames=REPO_REPORT_COLUMNS, delimiter='|')
             writer.writeheader()
             for data in repos:
@@ -177,13 +177,15 @@ def get_image_summary(
                    'lastRecordedPullTime': dt,
                    'daysSinceLastPull': day_diff
                 }
-        
+
         logger.info("All images have been processed for repository: %s", repo)
         return summary
-    
+
     except boto3.exceptions.Boto3Error as e:
         # Log Boto3-specific errors
         logger.error("A Boto3 error occurred while processing repository %s: %s", repo, str(e))
+        return {'totalImages': 0, 'totalSize(MB)': 0, 'monthlyStorageCost(USD)': 0,
+                'lastRecordedPullTime': None, 'daysSinceLastPull': None}
 
     except Exception as e:
         # Log any unexpected errors
@@ -221,13 +223,13 @@ def get_lifecycle_policy(
 
         logger.info("All lifecycle policies have been processed for repository: %s", repo)
         return lifecycle_policy
-    
+
     except client_ecr.exceptions.LifecyclePolicyNotFoundException:
         # Handle case where no lifecycle policy is found
         lifecycle_policy = {'lifecyclePolicyText': text}
         logger.warning("No lifecycle policy found for repository: %s", repo)
         return lifecycle_policy
-    
+
     except boto3.exceptions.Boto3Error as e:
         # Log Boto3-specific errors
         logger.error("A Boto3 error occurred while processing repository %s: %s", repo, str(e))
@@ -301,7 +303,7 @@ def get_image_report(
                     'imageManifestMediaType': i['imageManifestMediaType'],
                 }
                 images.append(image)
-            
+
             # Check for more pages of results
             if 'nextToken' not in response:
                 break
@@ -310,7 +312,7 @@ def get_image_report(
 
         if repo.find('/') != -1:
             repo = repo.replace('/', '_')
-            
+
         # Write image data to CSV file
         with open('/data/'+repo+'_'+IMAGE_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
         #with open(IMAGE_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
@@ -321,7 +323,7 @@ def get_image_report(
                 writer.writerow(data)
 
         logger.info("All images have been processed for repository: %s", repo)
-    
+
     except (boto3.exceptions.Boto3Error, csv.Error) as e:
         # Log Boto3-specific errors
         logger.error("An error occurred while processing repository %s: %s", repo, str(e))
@@ -356,7 +358,7 @@ def get_ecr_unit_costs() -> dict:
         price_list = json.loads(response['PriceList'][0])
         on_demand_prices = list(price_list['terms']['OnDemand'].values())
         price_dimensions = list(on_demand_prices[0]['priceDimensions'].values())
-        
+
         # Validate the response contains expected data
         if not price_dimensions:
             raise ValueError(f"No pricing data found for region {region}")
@@ -369,6 +371,7 @@ def get_ecr_unit_costs() -> dict:
 
     except (boto3.exceptions.Boto3Error, KeyError, ValueError) as e:
         logger.error("Failed to retrieve ECR pricing: %s", str(e))
+        return {'description': 'Error retrieving pricing', 'price_per_unit': 0.0}
 
 if __name__ == '__main__':
     if report == 'registry':

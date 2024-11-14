@@ -46,4 +46,4 @@ jobs:
           pip install pylint
       - name: PyLint
         run: |
-          pylint ./cid/
+          pylint ./src/

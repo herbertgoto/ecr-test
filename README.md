@@ -22,17 +22,18 @@ Follow these steps to run the project:
 
 1. **Clone or create the project**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/aws-samples/amazon-ecr-cost-vulnerability-and-usage-reporting.git
+   cd amazon-ecr-cost-vulnerability-and-usage-reporting
    # or create the directories manually
    ```
 
 2. **Build the Docker image**
    ```bash
-   docker build -t my-app .
+   docker build -t my-app:v0.1.0 .
    ```
    
    This command builds a Docker image with the following parameters:
-   - `-t my-app`: Tags the image with the name "my-python-app"
+   - `-t my-app:v0.1.0`: Tags the image with the name "my-python-app" and the tag "v0.1.0". You can replace the name and tag with any values you want. 
    - `.`: Uses the Dockerfile in the current directory as the build context
 
    Make sure you're in the root directory of the project when running this command.

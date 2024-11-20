@@ -1,6 +1,6 @@
 # Implementing cost, vulnerability, and usage reporting for Amazon ECR
 
-AWS users have been adopting Amazon Elastic Container Registry (ECR) as their container image repository due to its ease of use and seamless integration with AWS container services. With the increasing adoption of ECR, there is a growing demand for centralized cost, usage and security reports. This tool introduces a comprehensive solution that provides valuable insights into repository usage metrics and costs. By running this tool, you can gain a deeper understanding of resource consumption and optimize costs effectively.
+AWS users have been adopting Amazon Elastic Container Registry (ECR) as their container image repository due to its ease of use and seamless integration with AWS container services. With the increasing adoption of ECR, there is a growing demand for centralized cost, usage and security reports. This code sample introduces a comprehensive solution that provides valuable insights into repository usage metrics and costs. By running this code sample, you can gain a deeper understanding of resource consumption and optimize costs effectively.
 
 ## Before you start
 
@@ -41,7 +41,7 @@ Follow these steps to run the project:
    There are many ways to configure IAM credentials for your environment. For this walkthrough, we use:
 
    ```bash
-   aws configure --profile aws-samples
+   aws configure --profile <your-profile-name>
    ```
 
    This command will request you for: AWS Access Key ID, AWS Secret Access Key, AWS Session Token, Default region name, and Default output format.   
@@ -52,16 +52,18 @@ Follow these steps to run the project:
 
    ```bash
    docker run \
-   -e AWS_ACCESS_KEY_ID=$(aws --profile aws-samples configure get aws_access_key_id) \
-   -e AWS_SECRET_ACCESS_KEY=$(aws --profile aws-samples configure get aws_secret_access_key) \
-   -e AWS_DEFAULT_REGION=<aws region code> \
-   -e AWS_SESSION_TOKEN=$(aws --profile aws-samples configure get aws_session_token)] \
-   -v <path to the directory where the report will be saved>:/data \
-   ecr-reporter:v0.1.0
+      -e AWS_ACCESS_KEY_ID=$(aws --profile <your profile name> configure get aws_access_key_id) \
+      -e AWS_SECRET_ACCESS_KEY=$(aws --profile <your profile name> configure get aws_secret_access_key) \
+      -e AWS_DEFAULT_REGION=<aws region code> \
+      -e AWS_SESSION_TOKEN=$(aws --profile <your profile name> configure get aws_session_token)] \
+      -v <path to the directory where the report will be saved>:/data \
+      ecr-reporter:v0.1.0
    ```
 
    Replace the following placeholders:
    - `<path to the directory where the report will be saved>`: Local directory path where the CSV reports will be saved
+   - `<your profile name>`: The name of the AWS CLI profile you used when configured your IAM credentials in step 3
+   - `<aws region code>`: Code of the AWS region you are using. i.e us-east-1
 
    Optional parameters:
    - `LOG_VERBOSITY`: Set to `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`)
@@ -110,15 +112,17 @@ Follow these steps to run the project:
 
    ```bash
    docker run \
-   -e AWS_ACCESS_KEY_ID=$(aws --profile aws-samples configure get aws_access_key_id) \
-   -e AWS_SECRET_ACCESS_KEY=$(aws --profile aws-samples configure get aws_secret_access_key) \
-   -e AWS_DEFAULT_REGION=us-east-1 \
-   -e AWS_SESSION_TOKEN=$(aws --profile aws-samples configure get aws_session_token)] \
-   -e REPORT=foobar
-   -v <path to the directory where the report will be saved>:/data \
-   ecr-reporter:v0.1.0
+      -e AWS_ACCESS_KEY_ID=$(aws --profile <your profile name> configure get aws_access_key_id) \
+      -e AWS_SECRET_ACCESS_KEY=$(aws --profile <your profile name> configure get aws_secret_access_key) \
+      -e AWS_DEFAULT_REGION=<aws region code> \
+      -e AWS_SESSION_TOKEN=$(aws --profile <your profile name> configure get aws_session_token)] \
+      -e REPORT=foobar
+      -v <path to the directory where the report will be saved>:/data \
+      ecr-reporter:v0.1.0
    ```
    To generate an image-level report, we set the environment variable `REPORT` to the name of the repository.
+
+   Please remember to replace the placeholders with your own values as you did in step 3.
   
 ## Security Notes
 

@@ -26,11 +26,15 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 --mount=type=bind,source=/src/requirements.txt,target=requirements.txt \
 python3 -m pip install -r requirements.txt
 
-# Switch to the non-privileged user to run the application.
-USER nobody
-
 # Copy the source code into the container.
 COPY /src/ .
+
+# Create data directory and set permissions for nobody user
+RUN mkdir -p /data && \
+    chown -R nobody:nobody /data
+
+# Switch to the non-privileged user to run the application.
+USER nobody
 
 # Run app.py when the container launches
 CMD ["python3", "app.py"]

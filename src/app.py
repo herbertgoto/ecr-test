@@ -25,7 +25,9 @@ import csv
 import logging
 import json
 from datetime import datetime
+from typing import Optional
 from pythonjsonlogger import jsonlogger # pylint: disable=import-error
+from botocore.exceptions import ClientError # pylint: disable=import-error
 import boto3 # pylint: disable=import-error
 import pytz # pylint: disable=import-error
 
@@ -34,6 +36,7 @@ report = os.environ.get('REPORT', 'registry')
 log_service_name = os.environ.get('LOG_SERVICE_NAME', 'ECRTool')
 log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
 decimal_separator = os.environ.get('DECIMAL_SEPARATOR', '.')
+aws_s3 = os.environ.get('AWS_S3')
 
 # Logging setup
 logger = logging.getLogger(log_service_name)
@@ -312,8 +315,8 @@ def get_image_report(
             response = client_ecr.describe_images(repositoryName=repo,nextToken=response['nextToken'], maxResults=MAX_RESULTS)
             continue
 
-        if repo.find('/') != -1:
-            repo = repo.replace('/', '_')
+        # Handle potential '/' in repository names for the image report
+        repo = repo.replace('/', '_') if '/' in repo else repo
 
         # Write image data to CSV file
         with open('/data/'+repo+'_'+IMAGE_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
@@ -375,8 +378,45 @@ def get_ecr_unit_costs() -> dict:
         logger.error("Failed to retrieve ECR pricing: %s", str(e))
         return {'description': 'Error retrieving pricing', 'price_per_unit': 0.0}
 
+def upload_to_s3(file_path: str, bucket: str, s3_key: Optional[str] = None) -> bool:
+    """
+    Uploads a file to an S3 bucket.
+
+    Args:
+        file_path (str): Local path to the file to upload
+        bucket (str): Name of the S3 bucket
+        s3_key (Optional[str]): The S3 key (path) where the file will be uploaded. 
+                               If not provided, uses the filename from file_path
+
+    Returns:
+        bool: True if file was uploaded successfully, False otherwise
+
+    Raises:
+        boto3.exceptions.Boto3Error: If there's an error interacting with AWS S3
+    """
+    try:
+        s3_client = boto3.client('s3')
+
+        # If no S3 key is provided, use the filename from the file_path
+        if s3_key is None:
+            s3_key = datetime.now().strftime("%m%d%Y") + '_' + os.path.basename(file_path)
+
+        s3_client.upload_file(file_path, bucket, s3_key)
+        logger.info("Successfully uploaded %s to s3://%s/%s", file_path, bucket, s3_key)
+        return True
+
+    except ClientError as e:
+        logger.error("Failed to upload %s to S3: %s", file_path, str(e))
+        return False
+
 if __name__ == '__main__':
     if report == 'registry':
         get_ecr_repo_cost_report()
+        if aws_s3:
+            upload_to_s3(f'/data/{REPO_REPORT_FILE}', aws_s3)
     else:
         get_image_report(report)
+        if aws_s3:
+            # Handle potential '/' in repository names for the image report
+            report_name = report.replace('/', '_') if '/' in report else report
+            upload_to_s3(f'/data/{report_name}_{IMAGE_REPORT_FILE}', aws_s3)

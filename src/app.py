@@ -33,10 +33,14 @@ import pytz # pylint: disable=import-error
 
 # Set env to scan a registry or a repository. Provide the name of the repository as env (e.g. REPORT=nginx). # pylint: disable=line-too-long
 report = os.environ.get('REPORT', 'registry')
+# Logging service name (default: 'ECRTool')
 log_service_name = os.environ.get('LOG_SERVICE_NAME', 'ECRTool')
+# Logging level (default: 'INFO') It can be DEBUG, INFO, WARNING, ERROR, or CRITICAL.
 log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
+# Decimal separator for CSV files
 decimal_separator = os.environ.get('DECIMAL_SEPARATOR', '.')
-aws_s3 = os.environ.get('AWS_S3')
+# Optional S3 bucket name for report storage. If set, reports will be automatically uploaded to this bucket.
+aws_s3_bucket = os.environ.get('AWS_S3_BUCKET')
 
 # Logging setup
 logger = logging.getLogger(log_service_name)
@@ -179,6 +183,7 @@ def get_image_summary(
                    'totalSize(MB)': round(total_size / (1000**2),1),
                    'monthlyStorageCost(USD)': round(total_size * ecr_costs['price_per_unit'] / (1000**3),4),
                    'lastRecordedPullTime': dt,
+                   'hasBeenPulled': flag,
                    'daysSinceLastPull': day_diff
                 }
 
@@ -412,11 +417,11 @@ def upload_to_s3(file_path: str, bucket: str, s3_key: Optional[str] = None) -> b
 if __name__ == '__main__':
     if report == 'registry':
         get_ecr_repo_cost_report()
-        if aws_s3:
-            upload_to_s3(f'/data/{REPO_REPORT_FILE}', aws_s3)
+        if aws_s3_bucket:
+            upload_to_s3(f'/data/{REPO_REPORT_FILE}', aws_s3_bucket)
     else:
         get_image_report(report)
-        if aws_s3:
+        if aws_s3_bucket:
             # Handle potential '/' in repository names for the image report
             report_name = report.replace('/', '_') if '/' in report else report
-            upload_to_s3(f'/data/{report_name}_{IMAGE_REPORT_FILE}', aws_s3)
+            upload_to_s3(f'/data/{report_name}_{IMAGE_REPORT_FILE}', aws_s3_bucket)

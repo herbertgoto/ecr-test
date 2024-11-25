@@ -105,11 +105,9 @@ def get_ecr_repo_cost_report() -> None:
         # Write repository data to CSV file
         with open('/data/'+REPO_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
         #with open(REPO_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
-            writer = csv.DictWriter(file, fieldnames=REPO_REPORT_COLUMNS, delimiter='|')
+            writer = csv.DictWriter(file, fieldnames=REPO_REPORT_COLUMNS)
             writer.writeheader()
             for data in repos:
-                data['totalSize(MB)'] = str(data['totalSize(MB)']).replace('.', decimal_separator)
-                data['monthlyStorageCost(USD)'] = str(data['monthlyStorageCost(USD)']).replace('.', decimal_separator)
                 writer.writerow(data)
 
         logger.info("All repositories have been processed for registry with id: %s", client_ecr.describe_registry()['registryId'])
@@ -180,8 +178,8 @@ def get_image_summary(
 
         # Compile summary data
         summary = {'totalImages': total_images,
-                   'totalSize(MB)': round(total_size / (1000**2),1),
-                   'monthlyStorageCost(USD)': round(total_size * ecr_costs['price_per_unit'] / (1000**3),4),
+                   'totalSize(MB)': str(round(total_size / (1000**2),1)).replace('.', decimal_separator),
+                   'monthlyStorageCost(USD)': str(round(total_size * ecr_costs['price_per_unit'] / (1000**3),4)).replace('.', decimal_separator),
                    'lastRecordedPullTime': dt,
                    'hasBeenPulled': flag,
                    'daysSinceLastPull': day_diff
@@ -304,7 +302,7 @@ def get_image_report(
                     'repositoryName': i['repositoryName'],
                     'imageTags': tags,
                     'imagePushedAt': i['imagePushedAt'].strftime("%m/%d/%Y %H:%M"),
-                    'imageSize(MB)': round(i['imageSizeInBytes'] / (1000**2),1),
+                    'imageSize(MB)': str(round(i['imageSizeInBytes'] / (1000**2),1)).replace('.', decimal_separator),
                     'imageScanStatus': scan_status,
                     'imageScanCompletedAt': scan_completed_at,
                     'findingSeverityCounts': finding_severity_counts,
@@ -326,10 +324,9 @@ def get_image_report(
         # Write image data to CSV file
         with open('/data/'+repo+'_'+IMAGE_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
         #with open(IMAGE_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
-            writer = csv.DictWriter(file, fieldnames=IMAGE_REPORT_COLUMNS, delimiter='|')
+            writer = csv.DictWriter(file, fieldnames=IMAGE_REPORT_COLUMNS)
             writer.writeheader()
             for data in images:
-                data['imageSize(MB)'] = str(data['imageSize(MB)']).replace('.', decimal_separator)
                 writer.writerow(data)
 
         logger.info("All images have been processed for repository: %s", repo)

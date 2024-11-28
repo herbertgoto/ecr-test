@@ -1,6 +1,6 @@
 # Implementing cost, vulnerability, and usage reporting for Amazon ECR
 
-AWS users have been adopting Amazon Elastic Container Registry (ECR) as their container image repository due to its ease of use and seamless integration with AWS container services. With the increasing adoption of ECR, there is a growing demand for centralized cost, usage and security reports. This code sample introduces a comprehensive solution that provides valuable insights into repository usage metrics and costs. By running this code sample, you can gain a deeper understanding of resource consumption and optimize costs effectively.
+AWS users have been adopting Amazon Elastic Container Registry (ECR) as their container image repository due to its ease of use and seamless integration with AWS container services. With the increasing adoption of ECR, there is a growing demand for centralized cost, usage, and security reports. This code sample provides valuable insights into repository usage metrics and costs. By running this code sample, you can gain a deeper understanding of resource consumption, security posture, and costs optimization opportunities.
 
 ## Solution Overview
 
@@ -14,16 +14,18 @@ The sample code generates two reports:
    | `createdAt` | The date when the repository was created |
    | `scanOnPush` | Whether images are scanned after being pushed to a repository |
    | `totalImages` | The total number of images in the repository |
-   | `totalSize(MB)` | The total size of the images in the repository in MB |
-   | `monthlyStorageCost(USD)` | The monthly storage cost in USD |
+   | `totalSize(MB)` | The combined size of the images in the repository in MB |
    | `hasBeenPulled` | Whether the repository has been pulled at least once |
    | `lastRecordedPullTime` | The date when the repository was last pulled |
    | `daysSinceLastPull` | The number of days since the repository was last pulled |
    | `lifecyclePolicyText` | The lifecycle policy text of the repository |
 
-   The contents of this report facilitate to identify the repositories that are not being used and can be deleted to reduce costs. The content also allows to identify which repositories have the most images, the most heaviest images ones, and the ones without lifecycle policies; which influences the cost of the repository. Last but not least, this report allows to see which repositories have security scan enabled in a consolidated way. 
+   The contents of this report help to identify the repositories that are not being used and can be deleted to reduce costs. The contents also allows to identify which repositories have the most images, the most heaviest ones, and the ones without lifecycle policies; which impacts the cost of the repository. Last but not least, this report allows to see which repositories have security scan enabled in a consolidated way.
 
-   - An image-level report that contains key attributes of all images/artifacts within a repository. This report contains the following attributes: 
+   > [!CAUTION]
+   > The totalSize(MB) field sums the size of the images in the repository which may provide you with insights about repositories that are consuming more storage and therefore may be candidates for optimization. However, this field cannot be used to determine the storage cost for each repository. Amazon ECR does not apply duplicate charges for container layers, which means that if you have several images with the same layer, it will only be counted once for pricing purposes. To obtain the exact storage cost for each repository, you would need to identify the different layers within all images of the repository and calculate the cost based on the size of the unique layers combined.
+
+   - An image-level report that contains key attributes of all images/artifacts within a repository. This report contains the following attributes:
 
    | Field | Description |
    |-------|-------------|
@@ -37,7 +39,7 @@ The sample code generates two reports:
    | `lastRecordedPullTime` | The date when the image was last pulled |
    | `daysSinceLastPull` | The number of days since the image was last pulled |
 
-   The contents of this report allows to dive deep into the images and their storage utilization, which helps to identify the images that are not being used and can be deleted to reduce costs. The contents can also provide insights to implement more adequate lifecycle policies. Finally, this report also facilitates to track images that have the most and more critical security findings, which helps to prioritize them for remediation.
+   The contents of this report allows to dive deep into the images and their storage utilization, which helps to identify which ones are not being used and can be deleted to reduce costs. The contents can also provide insights to implement more adequate lifecycle policies. Finally, this report also facilitates to track images that have the most and more critical security findings, which helps to prioritize them for remediation.
 
 ## Before you start
 
@@ -84,7 +86,10 @@ Follow these steps to run the project:
    aws configure --profile <your-profile-name>
    ```
 
-   This command will request you for: AWS Access Key ID, AWS Secret Access Key, AWS Session Token, Default region name, and Default output format.   
+   This command will request you for: AWS Access Key ID, AWS Secret Access Key, AWS Session Token, Default region name, and Default output format.  
+
+   > [!CAUTION]
+   > We do not recommend using long-term credentials for this solution. Instead, we recommend using temporary credentials. We also recommend using a principal with the least privileges needed to run the solution. The specific permissions required can be found [here](assets/ecr_permissions.json). Security best practices in AWS IAM can be found [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html).
 
 4. **Generate the summary report**
 

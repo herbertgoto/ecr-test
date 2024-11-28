@@ -88,8 +88,9 @@ Follow these steps to run the project:
 
    This command will request you for: AWS Access Key ID, AWS Secret Access Key, AWS Session Token, Default region name, and Default output format.  
 
-   > [!CAUTION]
-   > We do not recommend using long-term credentials for this solution. Instead, we recommend using temporary credentials. We also recommend using a principal with the least privileges needed to run the solution. The specific permissions required can be found [here](assets/ecr_permissions.json). Security best practices in AWS IAM can be found [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html).
+
+> [!CAUTION]
+> We do not recommend using long-term credentials for this solution. Instead, we recommend using temporary credentials. We also recommend using a principal with the least privileges needed to run the solution. The specific permissions required can be found [here](assets/ecr_permissions.json). Security best practices in AWS IAM can be found [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html).
 
 4. **Generate the summary report**
 

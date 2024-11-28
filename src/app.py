@@ -1,7 +1,7 @@
 #!/bin/env python
 
 """
-ECR Cost and Security Report Tool # pylint: disable=line-too-long
+ECR Cost and Security Report Script # pylint: disable=line-too-long
 
 This script generates reports on Amazon Elastic Container Registry (ECR) repositories and images.
 It can create a summary report for all repositories in a registry or a detailed report for images in a specific repository.
@@ -13,17 +13,19 @@ Usage:
 Environment Variables:
     REPORT: 'registry' or a repository name (default: 'registry')
     LOG_VERBOSITY: Logging level (default: 'INFO') It can be DEBUG, INFO, WARNING, ERROR, or CRITICAL.
+    DECIMAL_SEPARATOR: Decimal separator for CSV files (default: '.')
+    AWS_S3_BUCKET: Optional S3 bucket name for report storage. If set, reports will be automatically uploaded to this bucket.
+    LOG_SERVICE_NAME: Logging service name (default: 'ECRTool')
 
 Dependencies:
-    - boto3
-    - pytz
-    - python-json-logger
+    - boto3==1.35.7
+    - pytz==2024.1
+    - python-json-logger==2.0.7
 """
 
 import os
 import csv
 import logging
-import json
 from datetime import datetime
 from typing import Optional
 from pythonjsonlogger import jsonlogger # pylint: disable=import-error
@@ -74,7 +76,7 @@ def get_ecr_repo_cost_report() -> None:
     # Define the columns for the CSV report
     # pylint: disable=invalid-name
     REPO_REPORT_COLUMNS = [
-        "repositoryName","createdAt","scanOnPush","totalImages","totalSize(MB)","monthlyStorageCost(USD)",
+        "repositoryName","createdAt","scanOnPush","totalImages","totalSize(MB)",
         "hasBeenPulled","lastRecordedPullTime","daysSinceLastPull","lifecyclePolicyText"
     ]
 
@@ -133,18 +135,15 @@ def get_image_summary(
     Returns:
         dict: The summary data for images of the repo, including:
             - totalImages (int): Total number of images in the repository.
-            - totalSize(MB) (float): Total size of all images in MB.
+            - totalSize(MB) (float): Combined size of all images in the repository in MB.
             - hasBeenPulled (bool): Whether any image has been pulled.
             - lastRecordedPullTime (datetime or None): Time of the last image pull, if any.
             - daysSinceLastPull (int or None): Days since the last image pull, if any.
-            - monthlyStorageCost(USD) (float): Monthly storage cost in USD.
 
     Raises:
         boto3.exceptions.Boto3Error: If there's an error interacting with AWS ECR.
         Exception: For any unexpected errors during processing.
     """
-    # Get ECR unit costs
-    ecr_costs = get_ecr_unit_costs()
 
     try:
         # Initialize variables
@@ -179,7 +178,6 @@ def get_image_summary(
         # Compile summary data
         summary = {'totalImages': total_images,
                    'totalSize(MB)': str(round(total_size / (1000**2),1)).replace('.', decimal_separator),
-                   'monthlyStorageCost(USD)': str(round(total_size * ecr_costs['price_per_unit'] / (1000**3),4)).replace('.', decimal_separator),
                    'lastRecordedPullTime': dt,
                    'hasBeenPulled': flag,
                    'daysSinceLastPull': day_diff
@@ -191,7 +189,7 @@ def get_image_summary(
     except boto3.exceptions.Boto3Error as e:
         # Log Boto3-specific errors
         logger.error("A Boto3 error occurred while processing repository %s: %s", repo, str(e))
-        return {'totalImages': 0, 'totalSize(MB)': 0, 'monthlyStorageCost(USD)': 0,
+        return {'totalImages': 0, 'totalSize(MB)': 0,
                 'lastRecordedPullTime': None, 'daysSinceLastPull': None}
 
     except Exception as e:
@@ -334,51 +332,6 @@ def get_image_report(
     except (boto3.exceptions.Boto3Error, csv.Error) as e:
         # Log Boto3-specific errors
         logger.error("An error occurred while processing repository %s: %s", repo, str(e))
-
-def get_ecr_unit_costs() -> dict:
-    """
-    Retrieves the unit costs for Amazon ECR service in the current region.
-
-    Returns:
-        dict: Dictionary containing:
-            - description (str): The pricing description
-            - price_per_unit (float): The price per unit for ECR storage in USD
-
-    Raises:
-        boto3.exceptions.Boto3Error: If there's an error accessing the AWS Pricing API
-        KeyError: If the expected pricing data structure is not found
-        ValueError: If there's an error parsing the price value
-    """
-    try:
-        pricing = boto3.client('pricing')
-        region = pricing.meta.region_name
-
-        # Get the pricing data for ECR
-        response = pricing.get_products(
-            ServiceCode='AmazonECR',
-            Filters=[
-                {'Type': 'TERM_MATCH', 'Field': 'regionCode', 'Value': region}
-            ]
-        )
-
-        # Access the pricing data from the response
-        price_list = json.loads(response['PriceList'][0])
-        on_demand_prices = list(price_list['terms']['OnDemand'].values())
-        price_dimensions = list(on_demand_prices[0]['priceDimensions'].values())
-
-        # Validate the response contains expected data
-        if not price_dimensions:
-            raise ValueError(f"No pricing data found for region {region}")
-
-        # Return the pricing data
-        return {
-            'description': price_dimensions[0]['description'],
-            'price_per_unit': float(price_dimensions[0]['pricePerUnit']['USD'])
-        }
-
-    except (boto3.exceptions.Boto3Error, KeyError, ValueError) as e:
-        logger.error("Failed to retrieve ECR pricing: %s", str(e))
-        return {'description': 'Error retrieving pricing', 'price_per_unit': 0.0}
 
 def upload_to_s3(file_path: str, bucket: str, s3_key: Optional[str] = None) -> bool:
     """

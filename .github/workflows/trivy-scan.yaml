@@ -26,6 +26,8 @@ jobs:
           load: true
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.29.0
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
         with:
           image-ref: 'ecr-usage-reporting:${{ github.sha }}'
           format: 'table'

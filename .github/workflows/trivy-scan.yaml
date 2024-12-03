@@ -28,8 +28,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: 'ecr-usage-reporting:${{ github.sha }}'
-          format: 'template'
-          template: "@$HOME/.local/bin/trivy-bin/contrib/html.tpl"
+          format: 'table'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'

@@ -1,33 +1,29 @@
-name: "Trivy Scanning"
+name: Trivy Container Security Scan
 
 on:
   push:
   pull_request:
   schedule:
     - cron: '0 0 * * 1'
-  #watch:
-  #  types: [started]
+  watch:
+    types: [started]
 
 jobs:
-  Trivy-Scan:
-    runs-on: ubuntu-latest
-
+  trivy-scan:
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
       - name: build local container
         uses: docker/build-push-action@v2
         with:
           tags: ecr-usage-reporting:${{ github.sha }}
           push: false
           load: true
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: 'ecr-usage-reporting:${{ github.sha }}'
           format: 'table'
@@ -35,43 +31,3 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-
-#      - name: Build an image from Dockerfile
-#        run: |
-#          docker build -t docker.io/my-organization/my-app:${{ github.sha }} .
-#
-#      - name: Run Trivy vulnerability scanner in docker mode
-#        uses: aquasecurity/trivy-action@master
-#        with:
-#          image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
-#          format: 'template'
-#          template: '@/contrib/sarif.tpl'
-#          output: 'trivy-results-docker.sarif'
-#          severity: 'CRITICAL'
-#
-#      - name: Upload Trivy scan results to GitHub Security tab
-#        uses: github/codeql-action/upload-sarif@v1
-#        with:
-#          sarif_file: 'trivy-results-docker.sarif'
-
-#     - name: Run Trivy vulnerability scanner in fs mode
-#        uses: anandg112/trivy-action@feat/add-skip-dirs-option
-#        with:
-#          scan-type: 'fs'
-#          scan-ref: '.'
-#          ignore-unfixed: true
-#          format: 'template'
-#          template: '@/contrib/sarif.tpl'
-#          output: 'trivy-results-fs.sarif'
-#          severity: 'CRITICAL'
-#          skip-dirs: "ignored-dir"
-
-#      - name: Upload Trivy scan results to GitHub Security tab
-#        uses: github/codeql-action/upload-sarif@v1
-#        with:
-#          sarif_file: 'trivy-results-fs.sarif'
-
-#      - name: DEBUG Upload Trivy scan results to GitHub Security tab
-#        uses: github/codeql-action/upload-sarif@v1
-#        with:
-#          sarif_file: 'debug-trivy-results.sarif'

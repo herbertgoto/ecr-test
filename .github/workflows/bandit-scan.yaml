@@ -1,20 +1,25 @@
-name: Bandit Security Scan
+name: Bandit Python Security Scan
 
 on:
+  push:
   pull_request:
     branches:
       - '*'
-
+  schedule:
+    - cron: '0 0 * * 1'
+  watch:
+    types: [started]
+    
 jobs:
   python-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
           - {python-version: '3.13' }
     steps:
       - name: Git clone the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -33,14 +38,14 @@ jobs:
           pip-audit --ignore-vuln GHSA-wfm5-v35h-vwf4 --ignore-vuln GHSA-cwvm-v4w8-q58c
 
   python-pylint-cid:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Git clone the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'
       - name: Install pylint
         run: |
           pip install pylint

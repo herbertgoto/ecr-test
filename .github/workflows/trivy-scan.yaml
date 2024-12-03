@@ -1,0 +1,37 @@
+name: Trivy Container Security Scan
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 1'
+  watch:
+    types: [started]
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: build local container
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_SUMMARY: false
+        with:
+          tags: ecr-usage-reporting:${{ github.sha }}
+          push: false
+          load: true
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
+        with:
+          image-ref: 'ecr-usage-reporting:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'

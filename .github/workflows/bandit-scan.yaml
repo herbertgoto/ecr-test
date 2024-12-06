@@ -2,13 +2,13 @@ name: Bandit Python Security Scan
 
 on:
   push:
-  pull_request:
-    branches:
-      - '*'
-  schedule:
-    - cron: '0 0 * * 1'
-  watch:
-    types: [started]
+  #pull_request:
+  #  branches:
+ #     - '*'
+  #schedule:
+  #  - cron: '0 0 * * 1'
+  #watch:
+  #  types: [started]
     
 jobs:
   python-scan:

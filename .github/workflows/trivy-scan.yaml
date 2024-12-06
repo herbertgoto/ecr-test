@@ -2,11 +2,11 @@ name: Trivy Container Security Scan
 
 on:
   push:
-  pull_request:
-  schedule:
-    - cron: '0 0 * * 1'
-  watch:
-    types: [started]
+  #pull_request:
+  #schedule:
+ #   - cron: '0 0 * * 1'
+  #watch:
+  #  types: [started]
 
 jobs:
   trivy-scan:

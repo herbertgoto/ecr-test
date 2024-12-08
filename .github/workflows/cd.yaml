@@ -28,12 +28,12 @@ jobs:
       #- name: Build
       #  run: npm run build
       - env:
-          GITHUB_TOKEN: ${{ secrets.DOTTBOTT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         id: release
         name: Release
         uses: ridedott/release-me-action@master
-        with:
-          dry-run: true
+        #with:
+        #  dry-run: true
           #commit-assets: |
           #  ./dist
           #node-module: true

@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install python3 and pip
-RUN dnf install -y python3 python3-pip&& \
+RUN dnf install -y python3 python3-pip && \
 dnf clean all
 
 COPY /src/requirements.txt .

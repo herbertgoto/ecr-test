@@ -19,10 +19,11 @@ Environment Variables:
     EXPORT_FORMAT: Format for the report (default: 'csv'). Other options: 'json', 'parquet'
 
 Dependencies:
-    - boto3==1.35.7
-    - pytz==2024.1
+    - boto3==1.35.76
+    - pytz==2024.2
     - python-json-logger==2.0.7
-    - pandas==2.1.1
+    - numpy==2.0.2
+    - pandas==2.2.0
     - pyarrow==14.0.1
 """
 
@@ -367,7 +368,7 @@ def export_data(data: dict, file_name: str) -> None:
     if export_format == 'csv':
         df.to_csv('/data/'+f'{file_name}.csv', index=False)
     elif export_format == 'json':
-        df.to_json('/data/'+f'{file_name}.json', orient='records')
+        df.to_json('/data/'+f'{file_name}.json', orient='records', lines=True)
     elif export_format == 'parquet':
         table = pa.Table.from_pandas(df)
         pq.write_table('/data/'+f'{file_name}.parquet', table)

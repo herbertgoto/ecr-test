@@ -371,7 +371,7 @@ def export_data(data: dict, file_name: str) -> None:
         df.to_json('/data/'+f'{file_name}.json', orient='records', lines=True)
     elif export_format == 'parquet':
         table = pa.Table.from_pandas(df)
-        pq.write_table('/data/'+f'{file_name}.parquet', table)
+        pq.write_table(table, '/data/'+f'{file_name}.parquet')
     else:
         raise ValueError(f"Unsupported export format: {export_format}")
 

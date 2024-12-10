@@ -22,9 +22,8 @@ Dependencies:
     - boto3==1.35.76
     - pytz==2024.2
     - python-json-logger==2.0.7
-    - numpy==2.0.2
-    - pandas==2.2.0
-    - pyarrow==14.0.1
+    - numpy==1.24.3
+    - pandas==2.1.4
 """
 
 import os
@@ -49,6 +48,8 @@ log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
 decimal_separator = os.environ.get('DECIMAL_SEPARATOR', '.')
 # Optional S3 bucket name for report storage. If set, reports will be automatically uploaded to this bucket.
 aws_s3_bucket = os.environ.get('AWS_S3_BUCKET')
+# Optional export format that specifies the output format that will have the generated report.
+export_format = os.environ.get('EXPORT_FORMAT', 'csv').lower()
 
 # Logging setup
 logger = logging.getLogger(log_service_name)
@@ -360,9 +361,6 @@ def export_data(data: dict, file_name: str) -> None:
     if 'daysSinceLastPull' in df.columns:
         df['daysSinceLastPull'] = df['daysSinceLastPull'].fillna(-1)
         df['daysSinceLastPull'] = df['daysSinceLastPull'].astype(int)
-
-    # Get the export format from the environment variable
-    export_format = os.environ.get('EXPORT_FORMAT', 'csv').lower()
 
     # Export the DataFrame based on the specified format
     if export_format == 'csv':

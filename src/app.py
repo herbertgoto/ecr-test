@@ -362,9 +362,6 @@ def export_data(data: dict, file_name: str) -> None:
         df['daysSinceLastPull'] = df['daysSinceLastPull'].fillna(-1)
         df['daysSinceLastPull'] = df['daysSinceLastPull'].astype(int)
 
-    # Get the export format from the environment variable
-    export_format = os.environ.get('EXPORT_FORMAT', 'csv').lower()
-
     # Export the DataFrame based on the specified format
     if export_format == 'csv':
         df.to_csv('/data/'+f'{file_name}.csv', index=False)

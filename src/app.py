@@ -13,18 +13,21 @@ Usage:
 Environment Variables:
     REPORT: 'registry' or a repository name (default: 'registry')
     LOG_VERBOSITY: Logging level (default: 'INFO') It can be DEBUG, INFO, WARNING, ERROR, or CRITICAL.
-    DECIMAL_SEPARATOR: Decimal separator for CSV files (default: '.')
+    DECIMAL_SEPARATOR: Decimal separator (default: '.')
     AWS_S3_BUCKET: Optional S3 bucket name for report storage. If set, reports will be automatically uploaded to this bucket.
     LOG_SERVICE_NAME: Logging service name (default: 'ECRTool')
+    EXPORT_FORMAT: Format for the report (default: 'csv'). Other options: 'json', 'parquet'
 
 Dependencies:
-    - boto3==1.35.7
-    - pytz==2024.1
+    - boto3==1.35.76
+    - pytz==2024.2
     - python-json-logger==2.0.7
+    - numpy==2.0.2
+    - pandas==2.2.0
+    - pyarrow==14.0.1
 """
 
 import os
-import csv
 import logging
 from datetime import datetime
 from typing import Optional
@@ -32,6 +35,9 @@ from pythonjsonlogger import jsonlogger # pylint: disable=import-error
 from botocore.exceptions import ClientError # pylint: disable=import-error
 import boto3 # pylint: disable=import-error
 import pytz # pylint: disable=import-error
+import pandas as pd # pylint: disable=import-error
+import pyarrow as pa # pylint: disable=import-error
+import pyarrow.parquet as pq # pylint: disable=import-error
 
 # Set env to scan a registry or a repository. Provide the name of the repository as env (e.g. REPORT=nginx). # pylint: disable=line-too-long
 report = os.environ.get('REPORT', 'registry')
@@ -39,7 +45,7 @@ report = os.environ.get('REPORT', 'registry')
 log_service_name = os.environ.get('LOG_SERVICE_NAME', 'ECRTool')
 # Logging level (default: 'INFO') It can be DEBUG, INFO, WARNING, ERROR, or CRITICAL.
 log_verbosity = os.environ.get('LOG_VERBOSITY', 'INFO')
-# Decimal separator for CSV files
+# Decimal separator
 decimal_separator = os.environ.get('DECIMAL_SEPARATOR', '.')
 # Optional S3 bucket name for report storage. If set, reports will be automatically uploaded to this bucket.
 aws_s3_bucket = os.environ.get('AWS_S3_BUCKET')
@@ -58,8 +64,8 @@ client_ecr = boto3.client('ecr')
 sts_client = boto3.client('sts')
 
 # Constants
-REPO_REPORT_FILE = 'repositories_summary.csv'
-IMAGE_REPORT_FILE = 'images_summary.csv'
+REPO_REPORT_FILE = 'repositories_summary'
+IMAGE_REPORT_FILE = 'images_summary'
 MAX_RESULTS = 1000
 
 def get_ecr_repo_cost_report() -> None:
@@ -67,18 +73,11 @@ def get_ecr_repo_cost_report() -> None:
     Creates a report with attributes associated with the costs of an ECR registry.
 
     This function queries all repositories in the ECR registry, gathers relevant information,
-    and writes a summary to a CSV file.
+    and writes a summary to file.
 
     Raises:
         boto3.exceptions.Boto3Error: If there's an error interacting with AWS services.
-        csv.Error: If there's an error writing to the CSV file.
     """
-    # Define the columns for the CSV report
-    # pylint: disable=invalid-name
-    REPO_REPORT_COLUMNS = [
-        "repositoryName","createdAt","scanOnPush","totalImages","totalSize(MB)",
-        "hasBeenPulled","lastRecordedPullTime","daysSinceLastPull","lifecyclePolicyText"
-    ]
 
     try:
         # Query ECR for repository details
@@ -104,17 +103,11 @@ def get_ecr_repo_cost_report() -> None:
             response = client_ecr.describe_repositories(nextToken=response['nextToken'], maxResults=MAX_RESULTS)
             continue
 
-        # Write repository data to CSV file
-        with open('/data/'+REPO_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
-        #with open(REPO_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
-            writer = csv.DictWriter(file, fieldnames=REPO_REPORT_COLUMNS)
-            writer.writeheader()
-            for data in repos:
-                writer.writerow(data)
+        export_data(repos, REPO_REPORT_FILE)
 
         logger.info("All repositories have been processed for registry with id: %s", client_ecr.describe_registry()['registryId'])
 
-    except (boto3.exceptions.Boto3Error, csv.Error) as e:
+    except (boto3.exceptions.Boto3Error) as e:
         # Log Boto3-specific errors
         logger.error("An error occurred while processing the registry for account %s in region %s: %s",
                      sts_client.get_caller_identity()["Account"], client_ecr.meta.region_name, str(e))
@@ -251,21 +244,14 @@ def get_image_report(
     Generates a detailed report for the images in a specified ECR repository.
 
     This function queries the specified repository to gather detailed information about each image,
-    including tags, size, scan status, and more. The data is then written to a CSV file.
+    including tags, size, scan status, and more. The data is then written to a file.
 
     Args:
         repo (str): The name of the repository to query.
 
     Raises:
         boto3.exceptions.Boto3Error: If an error occurs while interacting with AWS ECR.
-        csv.Error: If an error occurs while writing to the CSV file.
     """
-    # Define the columns for the CSV report
-    # pylint: disable=invalid-name
-    IMAGE_REPORT_COLUMNS = [
-        "repositoryName","imageTags","imagePushedAt","imageSize(MB)","imageScanStatus","imageScanCompletedAt",
-        "findingSeverityCounts","lastRecordedPullTime","imageDigest","imageManifestMediaType"
-    ]
 
     try:
         # Query ECR for image details
@@ -318,18 +304,11 @@ def get_image_report(
 
         # Handle potential '/' in repository names for the image report
         repo = repo.replace('/', '_') if '/' in repo else repo
-
-        # Write image data to CSV file
-        with open('/data/'+repo+'_'+IMAGE_REPORT_FILE, mode='a', newline='', encoding='utf-8') as file:
-        #with open(IMAGE_REPORT_FILE, mode='a', newline='') as file:            # This if for local tests of python code.
-            writer = csv.DictWriter(file, fieldnames=IMAGE_REPORT_COLUMNS)
-            writer.writeheader()
-            for data in images:
-                writer.writerow(data)
+        export_data(images, repo+'_'+IMAGE_REPORT_FILE)
 
         logger.info("All images have been processed for repository: %s", repo)
 
-    except (boto3.exceptions.Boto3Error, csv.Error) as e:
+    except (boto3.exceptions.Boto3Error) as e:
         # Log Boto3-specific errors
         logger.error("An error occurred while processing repository %s: %s", repo, str(e))
 
@@ -364,14 +343,45 @@ def upload_to_s3(file_path: str, bucket: str, s3_key: Optional[str] = None) -> b
         logger.error("Failed to upload %s to S3: %s", file_path, str(e))
         return False
 
+def export_data(data: dict, file_name: str) -> None:
+    """
+    Exports data to a file in the format specified by the EXPORT_FORMAT environment variable.
+
+    Args:
+        data (dict): The data to be exported.
+        file_name (str): The base name of the file to export to (without extension).
+
+    Raises:
+        ValueError: If the EXPORT_FORMAT is not supported.
+    """
+    # Convert the dictionary to a DataFrame
+    df = pd.DataFrame(data)
+    # Check if daysSinceLastPull column exists before attempting to modify it
+    if 'daysSinceLastPull' in df.columns:
+        df['daysSinceLastPull'] = df['daysSinceLastPull'].fillna(-1)
+        df['daysSinceLastPull'] = df['daysSinceLastPull'].astype(int)
+
+    # Get the export format from the environment variable
+    export_format = os.environ.get('EXPORT_FORMAT', 'csv').lower()
+
+    # Export the DataFrame based on the specified format
+    if export_format == 'csv':
+        df.to_csv('/data/'+f'{file_name}.csv', index=False)
+    elif export_format == 'json':
+        df.to_json('/data/'+f'{file_name}.json', orient='records', lines=True)
+    elif export_format == 'parquet':
+        table = pa.Table.from_pandas(df)
+        pq.write_table(table, '/data/'+f'{file_name}.parquet')
+    else:
+        raise ValueError(f"Unsupported export format: {export_format}")
+
+    if aws_s3_bucket:
+        upload_to_s3(f'/data/{file_name}.{export_format}', aws_s3_bucket)
+
+    logger.info("Data exported successfully to %s.%s", file_name, export_format)
+
 if __name__ == '__main__':
     if report == 'registry':
         get_ecr_repo_cost_report()
-        if aws_s3_bucket:
-            upload_to_s3(f'/data/{REPO_REPORT_FILE}', aws_s3_bucket)
     else:
         get_image_report(report)
-        if aws_s3_bucket:
-            # Handle potential '/' in repository names for the image report
-            report_name = report.replace('/', '_') if '/' in report else report
-            upload_to_s3(f'/data/{report_name}_{IMAGE_REPORT_FILE}', aws_s3_bucket)

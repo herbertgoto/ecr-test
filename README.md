@@ -6,7 +6,7 @@ AWS users have been adopting Amazon Elastic Container Registry (ECR) as their co
 
 The sample code generates two reports:
 
-   - A summary for the repositories in a registry that contains the following key attributes:
+   - **Summary Report**: A summary for the repositories in a registry that contains the following key attributes:
 
    | Field | Description |
    |-------|-------------|
@@ -23,9 +23,9 @@ The sample code generates two reports:
    The contents of this report help to identify the repositories that are not being used and can be deleted to reduce costs. The contents also allows to identify which repositories have the most images, the most heaviest ones, and the ones without lifecycle policies; which impacts the cost of the repository. Last but not least, this report allows to see which repositories have security scan enabled in a consolidated way.
 
    > [!CAUTION]
-   > The totalSize(MB) field sums the size of the images in the repository which may provide you with insights about repositories that are consuming more storage and therefore may be candidates for optimization. However, this field cannot be used to determine the storage cost for each repository. Amazon ECR does not apply duplicate charges for container layers, which means that if you have several images with the same layer, it will only be counted once for pricing purposes. To obtain the exact storage cost for each repository, you would need to identify the different layers within all images of the repository and calculate the cost based on the size of the unique layers combined.
+   > The totalSize(MB) field sums the size of the images in the repository which may provide you with insights about repositories that are consuming more storage and therefore may be candidates for optimization. However, **this field cannot be used to determine the storage cost for each repository**. Amazon ECR does not apply duplicate charges for container layers, which means that if you have several images with the same layer, it will only be counted once for pricing purposes. To obtain the exact storage cost for each repository, you would need to identify the different layers within all images of the repository and calculate the cost based on the size of the unique layers combined.
 
-   - An image-level report that contains key attributes of all images/artifacts within a repository. This report contains the following attributes:
+   - **Image Level Report**: An image-level report that contains key attributes of all images/artifacts within a repository. This report contains the following attributes:
 
    | Field | Description |
    |-------|-------------|
@@ -90,7 +90,7 @@ Follow these steps to run the project:
 
 
 > [!CAUTION]
-> We do not recommend using long-term credentials for this solution. Instead, we recommend using temporary credentials. We also recommend using a principal with the least privileges needed to run the solution. The specific permissions required can be found [here](assets/ecr_permissions.json). Security best practices in AWS IAM can be found [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html).
+> It is not recommended using long-term credentials for this solution. Use temporary credentials. Always use a principal with the least privileges needed to run the solution. The specific permissions required can be found [here](assets/ecr_permissions.json). Security best practices in AWS IAM can be found [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html).
 
 4. **Generate the summary report**
 
@@ -105,12 +105,12 @@ Follow these steps to run the project:
       [-e LOG_VERBOSITY=<log verbosity level>] \
       [-e AWS_S3_BUCKET=<s3 bucket name>] \
       [-e DECIMAL_SEPARATOR=<decimal separator>] \
+      [-e EXPORT_FORMAT=<export format>] \
       [-v <path to the directory where the report will be saved>:/data] \
       <image name>:<image tag>
    ```
 
    Replace the following placeholders:
-   - `<path to the directory where the report will be saved>`: Local directory path where the CSV reports will be saved
    - `<your profile name>`: The name of the AWS CLI profile you used when configured your IAM credentials in step 3
    - `<aws region code>`: Code of the AWS region you are using. i.e us-east-1
    - `<image name>`: The name of the image to be used. i.e ecr-reporter
@@ -121,9 +121,9 @@ Follow these steps to run the project:
    - `LOG_VERBOSITY`: Set to `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`).
    - `DECIMAL_SEPARATOR`: Set to `.` or `,` for CSV number formatting (default: `.`).
    - `AWS_S3_BUCKET`: Set to the name of the S3 bucket where the report will be saved. If not set, the report will be saved locally to the container.
+   - `EXPORT_FORMAT`: Delimitation format to use for report generation. Set to `csv`, `json`, or `parquet` (default: `csv`).
    - `<path to the directory where the report will be saved>`: Set to the path to the directory where the report will be saved. If not set, the report will be saved locally to the container.
-   ### Understanding the reports
-
+   
 5. **Generate the image-level report**
 
    Use the following command to generate the image-level report:
@@ -138,19 +138,20 @@ Follow these steps to run the project:
       [-e LOG_VERBOSITY=<log verbosity level>] \
       [-e AWS_S3_BUCKET=<s3 bucket name>] \
       [-e DECIMAL_SEPARATOR=<decimal separator>] \
+      [-e EXPORT_FORMAT=<export format>] \
       [-v <path to the directory where the report will be saved>:/data] \
       <image name>:<image tag>
    ```
 
    To generate an image-level report, we set the environment variable `REPORT` to the name of the repository.
 
-   Please remember to replace the placeholders with your own values as you did in step 4.
+   Please remember to replace the placeholders with your own values **as you did on step 4**.
   
 ## Security Notes
 
-- The application runs as a non-root user inside the container for enhanced security
-- Python bytecode generation is disabled
-- Unbuffered output is enabled for better logging in containerized environments
+- The application runs as a non-root user inside the container for enhanced security.
+- Python bytecode generation is disabled.
+- Unbuffered output is enabled for better logging in containerized environments.
 
 ## Troubleshooting
 

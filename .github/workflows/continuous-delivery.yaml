@@ -33,3 +33,4 @@ jobs:
         with:
           dry-run: true
           disable-changelog: true
+          release-branches: '["main"]'

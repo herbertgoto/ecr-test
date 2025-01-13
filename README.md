@@ -43,7 +43,7 @@ The sample code generates two reports:
 
 ## Before you start
 
-1. [Docker](https://docs.docker.com/get-docker/) (or any other container build tool) installed in your environment
+1. [Finch](https://github.com/runfinch/finch) (or any other container build tool) installed in your environment
 2. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed in your environment
 3. An IAM principal (user or role) with [this policy](assets/ecr_permissions.json)
 4. Git
@@ -68,13 +68,13 @@ Follow these steps to run the project:
    git clone https://github.com/aws-samples/amazon-ecr-cost-vulnerability-and-usage-reporting.git
    ```
 
-2. **Build the Docker image**
+2. **Build the image**
    ```bash
    cd amazon-ecr-cost-vulnerability-and-usage-reporting
-   docker build -t ecr-reporter:v0.1.0 .
+   finch build -t ecr-reporter:v0.1.0 .
    ```
    
-   This command builds a Docker image with the following parameters:
+   This command builds an image with the following parameters:
    - `-t ecr-reporter:v0.1.0`: Tags the image with the name "ecr-reporter" and the tag "v0.1.0". You can replace the name and tag with any values you want. 
    - `.`: Uses the Dockerfile in the current directory as the build context
 
@@ -97,7 +97,7 @@ Follow these steps to run the project:
    Use the following command to generate the repositories summary report:
 
    ```bash
-   docker run \
+   finch run \
       -e AWS_ACCESS_KEY_ID=$(aws --profile <your profile name> configure get aws_access_key_id) \
       -e AWS_SECRET_ACCESS_KEY=$(aws --profile <your profile name> configure get aws_secret_access_key) \
       -e AWS_DEFAULT_REGION=<aws region code> \
@@ -129,7 +129,7 @@ Follow these steps to run the project:
    Use the following command to generate the image-level report:
 
    ```bash
-   docker run \
+   finch run \
       -e AWS_ACCESS_KEY_ID=$(aws --profile <your profile name> configure get aws_access_key_id) \
       -e AWS_SECRET_ACCESS_KEY=$(aws --profile <your profile name> configure get aws_secret_access_key) \
       -e AWS_DEFAULT_REGION=<aws region code> \
@@ -156,7 +156,7 @@ Follow these steps to run the project:
 ## Troubleshooting
 
 - If you encounter permission issues, ensure your `src/` directory and files have appropriate permissions
-- For Docker build issues, verify that your Docker daemon is running
+- For Finch build issues, verify that the VM is running
 - Check that all required files are in the correct locations as per the project structure
 
 ## Security

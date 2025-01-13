@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - env:
-          GITHUB_TOKEN: ${{ secrets.DOTTBOTT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         name: Release
         uses: ridedott/release-me-action@master
         #with:
@@ -31,4 +31,5 @@ jobs:
         #      { "release": "patch", "type": "refactor" },
         #    ]
         with:
+          dry-run: true
           disable-changelog: true

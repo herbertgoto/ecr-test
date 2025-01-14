@@ -1,10 +1,10 @@
-name: Continuous Delivery
+name: Release
 
 on:
-  workflow_dispatch:
-  #push:
-  #  branches:
-  #    - master
+  #workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   release:
@@ -22,8 +22,6 @@ jobs:
         name: Release
         uses: ridedott/release-me-action@master
         with:
-          commit-assets: |
-            ./src
-          dry-run: true
-          disable-changelog: true
+          #dry-run: true
+          #disable-changelog: true
           release-branches: '["main"]'

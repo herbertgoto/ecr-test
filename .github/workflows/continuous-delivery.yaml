@@ -21,16 +21,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         name: Release
         uses: ridedott/release-me-action@master
-        #with:
-        #  release-rules: |
-        #    [
-        #      { "release": "patch", "type": "build" },
-        #      { "release": "patch", "type": "chore" },
-        #      { "release": "patch", "type": "ci" },
-        #      { "release": "patch", "type": "improvement" },
-        #      { "release": "patch", "type": "refactor" },
-        #    ]
         with:
+          commit-assets: |
+            ./src
           dry-run: true
           disable-changelog: true
           release-branches: '["main"]'

@@ -1,3 +1,14 @@
+## [1.0.2](https://github.com/herbertgoto/ecr-test/compare/v1.0.1...v1.0.2) (2025-01-20)
+
+### Continuous Integration
+
+- deployment with semver - fix ([6a925b0](https://github.com/herbertgoto/ecr-test/commit/6a925b09aa041211561d5c3decd38c5d20bc5c2b))
+- deployment with semver - fix 2 ([af5a439](https://github.com/herbertgoto/ecr-test/commit/af5a4392926d34f2e75449f606db4f01de5d2930))
+
+### Other
+
+- Merge branch 'main' of github.com:herbertgoto/ecr-test ([cafbd9e](https://github.com/herbertgoto/ecr-test/commit/cafbd9ec13cb4109388febe58f94d0243dd1debf))
+
 ## [1.0.1](https://github.com/herbertgoto/ecr-test/compare/v1.0.0...v1.0.1) (2025-01-20)
 
 ### Continuous Integration

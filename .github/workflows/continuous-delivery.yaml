@@ -5,16 +5,47 @@ on:
   #push:
   #  branches:
   #    - main
-
-env:
-  AWS_REGION : "us-east-1" #Change to reflect your Region
-
-# Permission can be added at job level or workflow level    
-permissions:
+    
+jobs:
+  push-to-ecr:
+    env:
+      AWS_REGION : "us-east-1" #Change to reflect your Region
+    permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
-      
-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Tagging the image
+        id: tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ridedott/release-me-action@master
+        with:
+          dry-run: true
+          disable-changelog: true
+          release-branches: '["main"]'
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: app
+          IMAGE_TAG: ${{ steps.tag.outputs.version }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -33,19 +64,3 @@ jobs:
           #dry-run: true
           #disable-changelog: true
           release-branches: '["main"]'
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
-        with:
-          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: app
-          IMAGE_TAG: ${{ steps.release.outputs.version }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG

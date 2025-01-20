@@ -1,10 +1,10 @@
 name: Release
 
 on:
-  #workflow_dispatch:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  #push:
+  #  branches:
+  #    - main
 
 jobs:
   release:
@@ -17,11 +17,27 @@ jobs:
           # Fetch all history.
           fetch-depth: 0
           persist-credentials: false
-      - env:
+      - name: Release
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        name: Release
         uses: ridedott/release-me-action@master
         with:
           #dry-run: true
           #disable-changelog: true
           release-branches: '["main"]'
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: app
+          IMAGE_TAG: ${{ steps.release.outputs.version }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG

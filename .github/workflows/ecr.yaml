@@ -3,7 +3,8 @@ name: Connect to an AWS role from a GitHub repository
 
 # Controls when the action will run. Invokes the workflow on push events but only for the main branch
 on:
-  pull_request:
+  workflow_dispatch:
+  #pull_request:
   #push:
   #  branches: [ main ]
 

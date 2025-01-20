@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/herbertgoto/ecr-test/compare/v1.0.4...v1.0.5) (2025-01-20)
+
+### Continuous Integration
+
+- deployment with semver - fix 6 ([9803336](https://github.com/herbertgoto/ecr-test/commit/980333606dcb282199971545b2d89c31ffe1023c))
+- deployment with semver - fix 7 ([81d36bc](https://github.com/herbertgoto/ecr-test/commit/81d36bc1764d8822894faeb31f157a099b23caf4))
+
 ## [1.0.4](https://github.com/herbertgoto/ecr-test/compare/v1.0.3...v1.0.4) (2025-01-20)
 
 ### Continuous Integration

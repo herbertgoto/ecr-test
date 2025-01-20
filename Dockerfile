@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.13.0
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS base
+ARG PYTHON_VERSION=3.11.9
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS base
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -13,8 +13,9 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install python3 and pip
-RUN dnf install -y python3 python3-pip&& \
-dnf clean all
+RUN dnf install -y python3.11 python3-pip && \
+    dnf install -y libxml2-2.10.4-1.amzn2023.0.7 && \
+    dnf clean all
 
 COPY /src/requirements.txt .
 
